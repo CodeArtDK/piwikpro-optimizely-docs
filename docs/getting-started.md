@@ -9,7 +9,6 @@ This guide walks you through installing, configuring, and verifying the Piwik PR
 Before you begin, make sure you have the following:
 
 - **Optimizely CMS 12** (EPiServer CMS 12) project set up and running
-- **.NET 8.0 SDK** or later installed
 - **A Piwik PRO account** with access to the Administration panel. If you do not have one yet, you can [sign up for a free trial](https://piwik.pro/business-plan/?utm_campaign=codeart).
 
 ---
@@ -116,8 +115,9 @@ The table below describes each setting:
 |---|---|---|
 | `Enabled` | `bool` | Enables or disables the connector entirely. Set to `true` to activate. |
 | `BaseUrl` | `string` | The base URL of your Piwik PRO instance (e.g., `https://your-instance.piwik.pro`). |
-| `ClientId` | `string` | The OAuth Client ID used to authenticate with the Piwik PRO API. |
-| `ClientSecret` | `string` | The OAuth Client Secret paired with the Client ID. |
+| `ClientId` | `string` | The OAuth Client ID used to authenticate with the Piwik PRO API. Required unless `AccessToken` is set. |
+| `ClientSecret` | `string` | The OAuth Client Secret paired with the Client ID. Required unless `AccessToken` is set. |
+| `AccessToken` | `string` | Static access token as an alternative to `ClientId` + `ClientSecret`. |
 | `WebSiteId` | `string` | The GUID identifying which website (app) in Piwik PRO to track and query against. |
 | `InjectTrackingScript` | `bool` | When `true`, the connector automatically injects the Piwik PRO container script into every page. Set to `false` if you manage the tracking script yourself. |
 | `ContainerId` | `string` | Optional. The Piwik PRO Tag Manager container ID. If omitted, defaults to the `WebSiteId`. |

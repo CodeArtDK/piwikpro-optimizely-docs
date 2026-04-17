@@ -49,7 +49,7 @@ The Piwik PRO tracking script is not injected into your site's HTML.
    ```
    @addTagHelper *, PiwikPRO.Optimizely.Connector
    ```
-5. **`required-client-resources` is in the head.** Your layout must include `@Html.RequiredClientResources("Header")` in the `<head>` section for the tracking script to be injected.
+5. **`required-client-resources` is in the head.** Your layout must include `<required-client-resources area="Header" />` in the `<head>` section for the tracking script to be injected.
 
 ## Content Analytics Widget Not Visible
 

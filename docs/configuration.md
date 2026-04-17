@@ -22,9 +22,10 @@ These settings must be provided for the connector to function.
 | Setting | Type | Description |
 |---------|------|-------------|
 | `BaseUrl` | `string` | The URL of your Piwik PRO instance (e.g., `https://your-instance.piwik.pro`). |
-| `ClientId` | `string` | OAuth client ID used to authenticate with the Piwik PRO API. |
-| `ClientSecret` | `string` | OAuth client secret used to authenticate with the Piwik PRO API. |
 | `WebSiteId` | `string` | UUID of the website or app configured in Piwik PRO. |
+| `ClientId` | `string` | OAuth client ID used to authenticate with the Piwik PRO API. Required unless `AccessToken` is set. |
+| `ClientSecret` | `string` | OAuth client secret used to authenticate with the Piwik PRO API. Required unless `AccessToken` is set. |
+| `AccessToken` | `string` | Static access token as an alternative to `ClientId` + `ClientSecret`. If set, `ClientId` and `ClientSecret` are not needed. |
 
 ## Tracking Settings
 
@@ -33,7 +34,7 @@ Control how and what the connector tracks on your site.
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
 | `Enabled` | `bool` | `true` | Master switch for the entire connector. Set to `false` to disable all tracking and dashboard features. |
-| `ContainerId` | `string` | | Container UUID for Piwik PRO Tag Manager injection. Required when using `InjectTrackingScript`. |
+| `ContainerId` | `string` | | Container UUID for Piwik PRO Tag Manager. When set with `InjectTrackingScript`, injects the Tag Manager container script. When omitted, falls back to the standard `ppas.js` tracking script. |
 | `InjectTrackingScript` | `bool` | `false` | Automatically inject the Piwik PRO tracking script into every page. Requires `ContainerId` to be set. |
 | `TrackLoggedInUserAsUserId` | `bool` | `false` | Send the authenticated user's name as the Piwik PRO User ID, enabling cross-device tracking for logged-in users. |
 | `TrackContentBlocks` | `bool` | `false` | Enable tracking for Optimizely content blocks. When enabled, analytics are aggregated across all pages that reference a given block. |
