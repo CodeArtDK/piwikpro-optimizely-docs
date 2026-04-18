@@ -42,8 +42,8 @@ The Piwik PRO tracking script is not injected into your site's HTML.
 
 **Check the following:**
 
-1. **`InjectTrackingScript` is enabled.** This setting must be `true` (it defaults to `true` if omitted, but verify it has not been explicitly set to `false`).
-2. **`ContainerId` is set.** The tracking script requires a valid Container ID to load the Piwik PRO tag manager container.
+1. **`InjectTrackingScript` is enabled.** This setting defaults to `false`. It must be explicitly set to `true` (in `appsettings.json` or via the `AddPiwikPRO(options => ...)` overload) for the loader script to be emitted.
+2. **`ContainerId` is set if you use Piwik PRO Tag Manager.** When using Tag Manager, set `ContainerId` to the container UUID. When using only the standard `ppas.js` tracking script, `ContainerId` can be omitted -- the connector falls back to `WebSiteId`.
 3. **Not in edit mode.** The tracking script is intentionally suppressed when content is viewed inside the Optimizely editor to avoid skewing analytics.
 4. **Tag helper is registered.** Ensure the Piwik PRO tag helper is available in your `_ViewImports.cshtml`:
    ```
@@ -80,3 +80,9 @@ The application throws an exception at startup referencing the Piwik PRO module.
 1. Ensure `services.AddPiwikPRO()` is called in your `Startup.cs` or `Program.cs` service configuration.
 2. Verify that the `module.config` file is included in the NuGet package and is being deployed to the `modules/PiwikPRO/` directory.
 3. If you are running from source (not the NuGet package), confirm that the `MappingPhysicalFileProvider` is configured to serve the module's static files.
+
+## Known Limitations
+
+### CDN dependency (jsdelivr)
+
+The admin dashboard views load Chart.js and D3 from `cdn.jsdelivr.net` via `<script>` tags with SRI integrity hashes. In air-gapped deployments, or in environments with a strict Content Security Policy that doesn't whitelist `jsdelivr.net`, charts will fail to render with no on-screen error. Add `https://cdn.jsdelivr.net` to your `script-src` CSP allowlist (and to any outbound proxy allowlist) for the admin views to render correctly.

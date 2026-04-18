@@ -9,7 +9,7 @@ Optimizely CMS installations often host multiple sites. The Piwik PRO connector 
 3. Select the Piwik PRO app that corresponds to each site.
 4. Click **Save**.
 
-The connector uses the mapping to determine which Piwik PRO Website ID to use when injecting the tracking script and when querying analytics data. If no mapping exists for a site, the connector falls back to the default `WebSiteId` from the `PiwikPRO:Connector` configuration section.
+The connector uses the mapping to determine which Piwik PRO Website ID to use when injecting the tracking script and when querying analytics data. On every front-end request, `TrackingCodeService` resolves `SiteDefinition.Current.Id` and looks up the mapping via `ISiteMappingService`. If no mapping exists for the current site -- or if no site can be resolved (e.g. outside an HTTP request context) -- the connector falls back to the default `WebSiteId` from the `PiwikPRO:Connector` configuration section.
 
 ## How Mappings Are Stored
 
@@ -21,4 +21,6 @@ Site-to-app mappings are persisted in Optimizely's Dynamic Data Store (DDS). Thi
 
 ## API Endpoints
 
-The connector exposes REST endpoints under `/episerver/PiwikPRO/api/` for managing site mappings programmatically. These endpoints require the `piwikpro:admin` authorization policy (see [Authorization](authorization.md)).
+The connector exposes REST endpoints for managing site mappings programmatically. They follow Optimizely's conventional module routing -- `{shellPath}/PiwikPRO/{Controller}/{Action}` -- where `{shellPath}` is whatever Optimizely's shell is mounted at (the default is `/episerver`). Do not hardcode the `/episerver/` prefix; resolve it from the host's configuration if you need to call these endpoints from external code.
+
+These endpoints require the `piwikpro:admin` authorization policy (see [Authorization](authorization.md)).

@@ -6,9 +6,9 @@ The Piwik PRO Optimizely Connector exposes `IPiwikProTrackingService` -- a scope
 
 The tracking pipeline has four stages:
 
-1. **Script injection** -- The Piwik PRO container loader JS is injected into the page header when you include `<required-client-resources area="Header" />` in your layout (requires `InjectTrackingScript: true` and a valid `ContainerId` in configuration).
+1. **Script injection** -- The Piwik PRO container loader JS is injected into the page header when you include `<required-client-resources area="Header" />` in your layout (requires `InjectTrackingScript: true`; `ContainerId` is needed only if you use Piwik PRO Tag Manager, otherwise the connector falls back to the standard `ppas.js` tracking script using `WebSiteId`).
 2. **Accumulation** -- During request processing, your code calls methods on `IPiwikProTrackingService` to queue tracking instructions. The service stores them in memory for the duration of the request.
-3. **Rendering** -- The `<piwikpro-tracking />` tag helper calls `BuildClientSideScript()` and emits all accumulated instructions as an inline `<script>` block.
+3. **Rendering** -- The `<piwikpro-tracking />` tag helper awaits `BuildClientSideScriptAsync()` (from inside its `ProcessAsync` override) and emits all accumulated instructions as an inline `<script>` block.
 4. **Exclusion** -- Requests in CMS Edit mode, Preview mode, or under the Optimizely protected path (`/episerver/`) are automatically suppressed. No tracking calls are emitted for editors working in the CMS.
 
 ### Layout Setup
@@ -150,7 +150,7 @@ void SetCustomDimension(int id, Func<string?> valueFactory);
 PiwikTracking.SetCustomDimension(5, () => DateTime.UtcNow.ToString("yyyy-MM-dd"));
 ```
 
-The factory is invoked when `BuildClientSideScript()` runs, so the value reflects the state at render time rather than at the point of registration.
+The factory is invoked when `BuildClientSideScriptAsync()` runs, so the value reflects the state at render time rather than at the point of registration.
 
 #### Context-aware factory
 

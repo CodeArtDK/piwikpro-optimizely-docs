@@ -15,13 +15,19 @@ The widget organizes analytics into six tabs:
 | **Funnel** | Navigation flow for the page: previous pages (where visitors came from), next pages (where they went), and outlinks (external URLs they clicked). |
 | **Audiences** | Visitor group breakdown for the page. This tab is populated only when audience tracking is enabled (`TrackAudiencesAsEvents` and `AudienceDimensionId` configured). |
 | **Conversions** | Goal conversions attributed to this page, plus a per-page goal picker that lets editors assign a goal to the page. |
-| **Sessions** | Session logs for visitors who viewed this content, showing individual visit details. |
+| **Sessions** | Recent **site-wide** session logs (not scoped to this content). See note below. |
+
+> **Sessions tab scope.** Piwik PRO's Sessions API does not expose a `page_url` column, so the connector cannot filter sessions by the content currently being edited. The Sessions tab therefore shows the most recent site-wide sessions and renders a notice in the UI explaining this. Per-page session filtering would require a multi-call Events-to-Sessions join and is deferred to a future release (v1.1).
+>
+> All other tabs (Overview, Traffic, Funnel, Audiences, Conversions) remain per-content -- and aggregated across referencing pages for block content as described below.
 
 ## Block and Non-Page Content
 
-When you select a block or other non-page content in the editor, the widget automatically aggregates analytics across every page that references that content. References are resolved through Optimizely's `IContentSoftLinkRepository`, so any page that includes the block in a content area or property will contribute its analytics to the totals.
+When you select a block or other non-page content in the editor, the per-content tabs automatically aggregate analytics across every page that references that content. References are resolved through Optimizely's `IContentSoftLinkRepository`, so any page that includes the block in a content area or property will contribute its analytics to the totals.
 
 If a block has no referencing pages, the widget displays a message indicating that no analytics are available.
+
+The Sessions tab is unaffected by this aggregation: it always shows site-wide recent sessions regardless of whether the selected content is a page or a block.
 
 ## Per-Page Goal Tracking
 

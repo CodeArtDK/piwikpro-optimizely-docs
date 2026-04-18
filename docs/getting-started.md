@@ -119,7 +119,7 @@ The table below describes each setting:
 | `ClientSecret` | `string` | The OAuth Client Secret paired with the Client ID. Required unless `AccessToken` is set. |
 | `AccessToken` | `string` | Static access token as an alternative to `ClientId` + `ClientSecret`. |
 | `WebSiteId` | `string` | The GUID identifying which website (app) in Piwik PRO to track and query against. |
-| `InjectTrackingScript` | `bool` | When `true`, the connector automatically injects the Piwik PRO container script into every page. Set to `false` if you manage the tracking script yourself. |
+| `InjectTrackingScript` | `bool` | Defaults to `false`. Set to `true` to have the connector automatically inject the Piwik PRO container script into every page. Leave at `false` if you manage the tracking script yourself. |
 | `ContainerId` | `string` | Optional. The Piwik PRO Tag Manager container ID. If omitted, defaults to the `WebSiteId`. |
 | `TrackAudiencesAsEvents` | `bool` | Optional. When `true`, Optimizely Visitor Group matches are sent as Piwik PRO events. |
 | `AudienceDimensionId` | `int` | Optional. Custom dimension ID used to store audience/visitor group information. |
