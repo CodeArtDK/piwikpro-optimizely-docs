@@ -41,6 +41,7 @@ Then follow the [Getting Started Guide](docs/getting-started.md) for step-by-ste
 | [Dashboard](docs/dashboard.md) | Overview of all analytics dashboard pages inside the CMS |
 | [Content Analytics Widget](docs/content-analytics-widget.md) | Per-page and per-block analytics in the editor |
 | [Tracking API](docs/tracking-api.md) | Programmatic event, goal, custom dimension, and audience tracking |
+| [Extending Tracking](docs/extending-tracking.md) | All auto-tracked signals at a glance, plus the custom tracking API and opt-out patterns |
 | [Multi-Site & Settings](docs/multi-site.md) | Mapping Optimizely sites to Piwik PRO apps |
 | [Authorization](docs/authorization.md) | Customizing who can access the dashboard |
 | [Troubleshooting](docs/troubleshooting.md) | Common issues and how to resolve them |
