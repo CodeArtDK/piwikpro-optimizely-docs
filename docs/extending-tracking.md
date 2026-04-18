@@ -74,6 +74,95 @@ public IActionResult Submit(ContactForm form)
 
 ---
 
+## Content Block Tracking
+
+Piwik PRO can report impressions and interactions on individual HTML elements -- teasers, hero banners, videos, CTA buttons -- so you can see which blocks in your layouts actually pull their weight. Two pieces are required:
+
+1. **Connector config** -- set `"PiwikPRO:Connector:TrackContentBlocks": true`. This tells the loader to call `trackVisibleContentImpressions()` on page load and after each scroll, so impressions fire only for blocks that actually enter the viewport.
+2. **HTML markup** -- flag each trackable element with `data-track-content` (or the `.piwikTrackContent` class). Add the optional attributes below for richer reporting.
+
+### Attributes
+
+| Attribute / Class | Where it goes | Purpose |
+|---|---|---|
+| `data-track-content` or `.piwikTrackContent` | Outer element | Marks the element as a trackable content block |
+| `data-content-name="..."` | Same element | Human-readable block name (shows up in reports) |
+| `data-content-piece="..."` or `.piwikContentPiece` | Inner element (image/video) | Identifies the specific creative piece |
+| `data-content-target="..."` or `.piwikContentTarget` | Link/button | Destination for interaction clicks |
+| `data-content-ignoreinteraction` or `.piwikContentIgnoreInteraction` | Target element | Disables automatic interaction tracking for this element |
+
+If `data-content-name` is omitted, Piwik PRO falls back to the `alt`/`title`/`src` of the inner piece. If `data-content-piece` is omitted, the image `src` or the inner text is used. If `data-content-target` is omitted, the closest `<a href>` is used.
+
+### Example: teaser block with image and CTA
+
+```cshtml
+@model TeaserBlock
+
+<div class="teaserblock" data-track-content data-content-name="@Model.Heading">
+    <a href="@Url.ContentUrl(Model.TargetLink)" data-content-target="@Url.ContentUrl(Model.TargetLink)">
+        <img src="@Url.ContentUrl(Model.Image)"
+             alt="@Model.Heading"
+             data-content-piece="@Url.ContentUrl(Model.Image)" />
+        <h2>@Model.Heading</h2>
+        <p>@Model.Text</p>
+        <span class="cta">@Model.ButtonText</span>
+    </a>
+</div>
+```
+
+### Example: video block
+
+```cshtml
+@model VideoBlock
+
+<div class="videoblock" data-track-content data-content-name="@Model.Title">
+    <video controls
+           src="@Url.ContentUrl(Model.VideoFile)"
+           poster="@Url.ContentUrl(Model.PosterImage)"
+           data-content-piece="@Url.ContentUrl(Model.VideoFile)">
+    </video>
+</div>
+```
+
+### Example: trackable CTA button
+
+```cshtml
+<a href="/signup"
+   class="btn btn-primary"
+   data-track-content
+   data-content-name="Free Trial CTA"
+   data-content-piece="Sidebar Button"
+   data-content-target="/signup">
+    Start your free trial
+</a>
+```
+
+### Further reading
+
+- [`trackVisibleContentImpressions`](https://developers.piwik.pro/docs/trackvisiblecontentimpressions) -- developer reference for the impression API
+- [`trackContentInteraction`](https://developers.piwik.pro/docs/trackcontentinteraction) -- developer reference for the interaction API
+- [Set up content tracking](https://help.piwik.pro/support/questions/set-up-content-tracking/) -- Piwik PRO help article with markup and reporting walkthrough
+
+---
+
+## Sample Site Walkthrough
+
+The connector repository ships an `AlloySampleSite` that wires up every piece of the tracking pipeline against the standard Optimizely Alloy templates. Use it as a copy-paste reference when adding the same patterns to your own solution.
+
+| Feature | File / Location |
+|---|---|
+| Connector config (all options) | `src/AlloySampleSite/appsettings.json` |
+| `AddPiwikPRO(options => { ... })` setup | `src/AlloySampleSite/Startup.cs` |
+| Custom dimension from Razor via `IPiwikProTrackingService` | `src/AlloySampleSite/Views/Shared/Layouts/_Root.cshtml` |
+| Server-side event (`AddEvent`) from controller | `src/AlloySampleSite/Controllers/SearchPageController.cs` |
+| Content-block markup with `data-track-content` | `src/AlloySampleSite/Views/Shared/TeaserBlock.cshtml` (and similar block templates) |
+| Audience-as-events config | `TrackAudiencesAsEvents: true` in `appsettings.json` |
+| Content block impression tracking | `TrackContentBlocks: true` + `data-track-content` in the block templates |
+
+Clone the repo, drop your Piwik PRO credentials into `appsettings.json`, and run the site to see the dashboard, the per-content widget, and all of the tracking signals above firing against live content.
+
+---
+
 ## Per-Page Goal Mapping via the Widget
 
 In the CMS edit view, open any page. The Piwik PRO widget in the assets pane has a **Page Goal** picker. Select a goal from the Piwik PRO manage-goals list and save. From then on, every visitor page view for that content will emit `trackGoal(<uuid>)` alongside the page view -- no code required.
