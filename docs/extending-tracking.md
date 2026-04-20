@@ -242,6 +242,58 @@ dotnet user-secrets set "PiwikPRO:Connector:ClientSecret" "<oauth-client-secret>
 
 Non-secret demo values (dimension IDs, tracking flags) live in `Startup.cs` as in-code `AddPiwikPRO(...)` defaults, so the site exercises every tracking surface without any `appsettings.json` edits once credentials are in user-secrets. Dimension IDs in `Startup.cs` reference dimensions that you must first create in the demo Piwik PRO tenant -- see [Configuration → Custom Dimension Auto-Tracking](configuration.md#custom-dimension-auto-tracking).
 
+### Layout-level tracking block
+
+The sample site's root layout (`Views/Shared/Layouts/_Root.cshtml`) pushes four site-specific custom dimensions on every request by injecting `IPiwikProTrackingService` into the view. This is the canonical pattern when you want signals that should fire for every page regardless of controller:
+
+```cshtml
+@using EPiServer.Framework.Web.Mvc.Html
+@using PiwikPRO.Optimizely.Connector.Services
+@inject IPiwikProTrackingService PiwikTracking
+
+@model IPageViewModel<SitePageData>
+
+@* ... <head>, <body>, header/footer partials ... *@
+
+@{
+    // Custom dimension 4 = Publish date. Dimension IDs must be created
+    // in your Piwik PRO instance first (see Configuration Reference).
+    var publishDate = Model.CurrentPage.StartPublish?.ToString("yyyy-MM-dd") ?? "unpublished";
+    PiwikTracking.SetCustomDimension(4, publishDate);
+
+    // Custom dimension 5 = comma-joined MetaKeywords on the page.
+    if (Model.CurrentPage.MetaKeywords != null && Model.CurrentPage.MetaKeywords.Count > 0)
+    {
+        PiwikTracking.SetCustomDimension(5, string.Join(", ", Model.CurrentPage.MetaKeywords));
+    }
+
+    // Custom dimension 10 = CMS context mode (Default / Edit / Preview /
+    // ProjectPreview). Useful for excluding editor sessions from reports.
+    var contextResolver = ViewContext.HttpContext?.RequestServices
+        .GetService(typeof(EPiServer.Web.IContextModeResolver))
+        as EPiServer.Web.IContextModeResolver;
+    if (contextResolver != null)
+    {
+        PiwikTracking.SetCustomDimension(10, contextResolver.CurrentMode.ToString());
+    }
+
+    // Custom dimension 6 = authenticated CMS username.
+    // PII — usernames are identifiable data. Enable only after DPO sign-off
+    // and with your privacy notice updated to reflect identifiable tracking.
+    var user = ViewContext.HttpContext?.User;
+    if (user?.Identity?.IsAuthenticated == true && !string.IsNullOrEmpty(user.Identity.Name))
+    {
+        PiwikTracking.SetCustomDimension(6, user.Identity.Name);
+    }
+}
+<piwikpro-tracking/>
+```
+
+Two things to note:
+
+1. **`<piwikpro-tracking/>` must appear in the layout** -- it's the tag helper that flushes everything queued by `IPiwikProTrackingService` into a single `<script>` block. Place it at the end of `<body>` so the Piwik loader has already registered.
+2. **The dimension IDs above (4, 5, 6, 10) are arbitrary demo values**. Swap them for the Dimension IDs of the dimensions you created in your own Piwik PRO admin (see [Configuration → Custom Dimension Auto-Tracking](configuration.md#custom-dimension-auto-tracking) for the Slot-vs-ID primer).
+
 ---
 
 ## Per-Page Goal Mapping via the Widget
