@@ -50,12 +50,58 @@ Track Optimizely Visitor Group matches as Piwik PRO events or custom dimensions.
 
 ## Custom Dimension Auto-Tracking
 
-Automatically send content metadata as Piwik PRO custom dimensions.
+The connector can automatically enrich every page view with metadata about the current Optimizely content by pushing values into Piwik PRO **custom dimensions**. Each option below is `null` by default — pointing an option at a dimension ID turns the signal on, leaving it `null` turns it off.
+
+### Before you set any of these: create the dimension in Piwik PRO
+
+A dimension only exists once you create it in the Piwik PRO admin UI. The connector does **not** create dimensions for you.
+
+1. In Piwik PRO, go to **Administration → Sites & apps → [your site] → Custom dimensions**.
+2. Click **Add an event dimension** (for per-page-view signals like `ContentType`) or **Add a session dimension** (for signals that persist for the whole visit like `Audience`). See [Event vs. session scope](#event-vs-session-scope) below.
+3. Give it a descriptive name (e.g. `ContentType`, `ContentLanguage`, `Audience`). The admin UI then shows it in a list with two numeric columns:
+   - **Slot** — per-category index, starts at 1 for session dimensions and 1 for event dimensions.
+   - **Dimension ID** — globally unique integer across both categories.
+4. **Use the Dimension ID** in `appsettings.json`. The connector emits Piwik PRO's `setCustomDimensionValue(<id>, <value>)` JavaScript call, which expects the globally-unique ID. The Slot is a display/ordering concept only; using it will write values to a different dimension (or none at all).
+
+Example: you create three dimensions and the admin shows:
+
+| Category | Slot | Dimension ID | Name |
+|----------|------|--------------|------|
+| Session | 1 | 1 | Audience |
+| Event | 1 | 2 | ContentType |
+| Event | 2 | 3 | ContentLanguage |
+
+The config that wires those up is:
+
+```json
+"AudienceDimensionId": 1,
+"ContentTypeDimensionId": 2,
+"ContentLanguageDimensionId": 3
+```
+
+### Event vs. session scope
+
+Piwik PRO stores an **event** dimension value alongside each page view and an **session** dimension value once per visit (overwritten if the value changes). Choose the category when you create the dimension — it cannot be changed afterwards.
+
+| Signal | Recommended scope | Why |
+|--------|-------------------|-----|
+| `Audience` (Visitor Groups) | Session | Visitor-group membership is a property of the visitor/session, not of any one page |
+| `ContentType`, `ContentLanguage`, `ContentSection`, `ContentPublishDate`, `ContentAuthor`, `ContentCategory` | Event | Values change per page view |
+
+### Configuration keys
 
 | Setting | Type | Default | Description |
 |---------|------|---------|-------------|
-| `ContentTypeDimensionId` | `int?` | `null` | Custom dimension ID for tracking the Optimizely content type name. Leave `null` to disable. |
-| `ContentLanguageDimensionId` | `int?` | `null` | Custom dimension ID for tracking the content language. Leave `null` to disable. |
+| `ContentTypeDimensionId` | `int?` | `null` | Optimizely content type name (e.g. `StandardPage`, `ArticlePage`). Event-scoped. |
+| `ContentLanguageDimensionId` | `int?` | `null` | Content language branch (`en`, `sv`, …). Event-scoped. |
+| `ContentSectionDimensionId` | `int?` | `null` | Name of the first-level ancestor page under the start page (e.g. `News`, `Products`). Useful for grouping by top-level section. Event-scoped. |
+| `ContentPublishDateDimensionId` | `int?` | `null` | ISO-8601 `yyyy-MM-dd` publish/change date, resolved from `IChangeTrackable.Changed` with fallback to `IVersionable.StartPublish`. Enables freshness analysis. Event-scoped. |
+| `ContentAuthorDimensionId` | `int?` | `null` | `CreatedBy` username of the content. **Usernames are often PII — see the [GDPR note](#pii--gdpr----trackloggedinuserasuserid) before enabling.** Event-scoped. |
+| `ContentCategoryDimensionId` | `int?` | `null` | Comma-joined Optimizely category names assigned to the content (requires the content to implement `ICategorizable`). Event-scoped. |
+
+Values are skipped when the configured option is `null` or when the source data is missing for a given page (e.g. no `Changed` timestamp, no categories assigned). Tracking never throws — failures log at `Debug` and the page view still fires.
+
+For pushing your own custom dimensions from code (e.g. a "FormSubmitted" dimension keyed off a controller), see [Extending Tracking → Custom Tracking from Your Code](extending-tracking.md#custom-tracking-from-your-code).
 
 ## Advanced Settings
 

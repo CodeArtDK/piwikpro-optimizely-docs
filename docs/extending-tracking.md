@@ -28,13 +28,13 @@ All dimension signals are skipped when the corresponding option is `null` and wh
 
 ## Custom Tracking from Your Code
 
-Inject `IPiwikProTrackingService` anywhere you have a DI context -- controller, middleware, Razor view, page/block controller, view component. The service is scoped to the current request and accumulates instructions that the `<piwikpro-tracking />` tag helper flushes into the rendered page.
+The built-in signals above cover common content metadata, but most real implementations need to track product-, campaign- or domain-specific details as well. Inject `IPiwikProTrackingService` anywhere you have a DI context -- controller, middleware, Razor view, page/block controller, view component, tag helper, filter. The service is scoped to the current request and accumulates instructions that the `<piwikpro-tracking />` tag helper flushes into a single `<script>` block at the end of the rendered page.
 
 ```csharp
 tracking.TrackEvent(category, action, name, value);     // all but category/action optional
 tracking.TrackGoal(goalId);                             // numeric id
 tracking.TrackGoal(goalUuid);                           // UUID string (recommended)
-tracking.SetCustomDimension(id, value);                 // immediate
+tracking.SetCustomDimension(id, value);                 // immediate value
 tracking.SetCustomDimension(id, valueFactory);          // Func<string?>
 tracking.SetCustomDimension(id, contextFactory);        // Func<HttpContext?, IContent?, string?>
 tracking.SetCustomVariable(slot, name, value, scope);   // scope defaults to "page"
@@ -43,21 +43,92 @@ tracking.AddAudience(name);                             // tracked as event and/
 
 See the [Tracking API reference](tracking-api.md) for method-by-method docs and rendered-JS examples.
 
-### Example: emit a section dimension from a Razor view
+### Recipe: add your own custom dimension
+
+Say you want a `Product Category` dimension that fires whenever a visitor views a product page.
+
+**1. Create the dimension in Piwik PRO.** In the admin UI go to **Administration → Sites & apps → [your site] → Custom dimensions** and click **Add an event dimension** (use *session* dimension instead if the value should persist across the whole visit). Name it `ProductCategory` and note the **Dimension ID** column — that's the globally-unique integer you pass to the connector, *not* the Slot number. See [Configuration → Custom Dimension Auto-Tracking](configuration.md#custom-dimension-auto-tracking) for the full primer on scopes and ID vs. Slot.
+
+**2. Push a value on page view.** From the product page controller or view:
+
+```csharp
+public class ProductPageController : PageController<ProductPage>
+{
+    private readonly IPiwikProTrackingService _tracking;
+
+    public ProductPageController(IPiwikProTrackingService tracking) => _tracking = tracking;
+
+    public IActionResult Index(ProductPage currentPage)
+    {
+        // Dimension ID from the Piwik PRO admin (NOT the Slot column).
+        _tracking.SetCustomDimension(12, currentPage.Category?.Name ?? "uncategorised");
+        return View(currentPage);
+    }
+}
+```
+
+Or equivalently from the Razor view:
 
 ```cshtml
 @using PiwikPRO.Optimizely.Connector.Services
 @inject IPiwikProTrackingService Tracking
 
-@{
-    if (Model.CurrentPage != null)
-    {
-        Tracking.SetCustomDimension(7, Model.Section?.Name ?? "unknown");
-    }
+@{ Tracking.SetCustomDimension(12, Model.CurrentPage.Category?.Name ?? "uncategorised"); }
+```
+
+The connector renders this as:
+
+```js
+_ppas.push(['setCustomDimensionValue', 12, 'Mountain Bikes']);
+```
+
+**3. Prefer `Func<>` overloads when the value is expensive or context-aware.** The factory isn't invoked until the tag helper flushes, so you can wire it up in a middleware or base controller without paying the cost on every request where the value ends up unused:
+
+```csharp
+_tracking.SetCustomDimension(12, (http, content) =>
+    content is ProductPage p ? p.Category?.Name : null);
+```
+
+When the factory returns `null` or an empty string, nothing is emitted for that dimension on that request.
+
+### Recipe: fire your own custom events
+
+Events are great for interactions that aren't page views -- search submits, video plays, CTA clicks, form steps. No Piwik PRO setup is needed up front; events are free-form and show up in the Analytics → Custom events report automatically.
+
+**From a controller** (server-side, renders on the resulting page):
+
+```csharp
+public IActionResult Search(string query)
+{
+    _tracking.TrackEvent(
+        category: "Search",
+        action:   "Submitted",
+        name:     query,            // optional
+        value:    null);            // optional numeric
+    return View("SearchResults", _service.Run(query));
 }
 ```
 
-### Example: track a goal on form submit
+**From a Razor view** (for conditional, render-time events):
+
+```cshtml
+@inject IPiwikProTrackingService Tracking
+@{ if (Model.IsSubscribed) Tracking.TrackEvent("Newsletter", "StateRestored"); }
+```
+
+**Directly from client-side JS** (for interactions that happen after the page has loaded -- clicks, scroll depth, video progress). Bypass the connector and push straight to the Piwik PRO queue:
+
+```html
+<button type="button" onclick="_ppas.push(['trackEvent', 'CTA', 'Click', 'Hero-FreeTrial']);">
+    Start free trial
+</button>
+```
+
+> **`RedirectToAction` caveat:** the tracking service is scoped per request, so anything queued before a redirect is lost with that request. Queue tracking on the response that actually renders to the user (the thank-you/confirmation page), not on the POST handler that redirects.
+
+### Recipe: track a goal on form submit
+
+Goals are just named, optionally-revenue-bearing events that Piwik PRO aggregates into conversion reports. Create the goal in **Administration → Goals**, then reference it by UUID (preferred -- stable across environments) or numeric ID:
 
 ```csharp
 public IActionResult Submit(ContactForm form)
@@ -70,7 +141,7 @@ public IActionResult Submit(ContactForm form)
 }
 ```
 
-> **Note:** Because the service is scoped to the current request, tracking calls made before a `RedirectToAction` are lost -- the redirect starts a new request. Track on the POST response page, or fire client-side on the thank-you page.
+For per-page goals that don't need code (e.g. "visiting this page = conversion"), use the **Page Goal** picker in the Content Analytics widget instead -- see [Per-Page Goal Mapping](#per-page-goal-mapping-via-the-widget) below.
 
 ---
 
@@ -151,15 +222,25 @@ The connector repository ships an `AlloySampleSite` that wires up every piece of
 
 | Feature | File / Location |
 |---|---|
-| Connector config (all options) | `src/AlloySampleSite/appsettings.json` |
-| `AddPiwikPRO(options => { ... })` setup | `src/AlloySampleSite/Startup.cs` |
+| `AddPiwikPRO(options => { ... })` with demo flags on | `src/AlloySampleSite/Startup.cs` |
 | Custom dimension from Razor via `IPiwikProTrackingService` | `src/AlloySampleSite/Views/Shared/Layouts/_Root.cshtml` |
-| Server-side event (`AddEvent`) from controller | `src/AlloySampleSite/Controllers/SearchPageController.cs` |
-| Content-block markup with `data-track-content` | `src/AlloySampleSite/Views/Shared/TeaserBlock.cshtml` (and similar block templates) |
-| Audience-as-events config | `TrackAudiencesAsEvents: true` in `appsettings.json` |
-| Content block impression tracking | `TrackContentBlocks: true` + `data-track-content` in the block templates |
+| Server-side `TrackEvent` from controller | `src/AlloySampleSite/Controllers/SearchPageController.cs` |
+| Content-block markup with `data-track-content` | `src/AlloySampleSite/Views/Shared/Blocks/TeaserBlock.cshtml` (and other block templates) |
+| Audience-as-events config | `options.TrackAudiencesAsEvents = true` in `Startup.cs` |
+| Content block impression tracking | `options.TrackContentBlocks = true` + `data-track-content` in the block templates |
 
-Clone the repo, drop your Piwik PRO credentials into `appsettings.json`, and run the site to see the dashboard, the per-content widget, and all of the tracking signals above firing against live content.
+### Running the sample locally
+
+The sample site is intentionally checked in with a clean `appsettings.json` -- tenant credentials are not committed. Set them via .NET user-secrets from the `src/AlloySampleSite` folder:
+
+```bash
+dotnet user-secrets set "PiwikPRO:Connector:BaseUrl"      "https://your.piwik.pro"
+dotnet user-secrets set "PiwikPRO:Connector:WebSiteId"    "<site-guid>"
+dotnet user-secrets set "PiwikPRO:Connector:ClientId"     "<oauth-client-id>"
+dotnet user-secrets set "PiwikPRO:Connector:ClientSecret" "<oauth-client-secret>"
+```
+
+Non-secret demo values (dimension IDs, tracking flags) live in `Startup.cs` as in-code `AddPiwikPRO(...)` defaults, so the site exercises every tracking surface without any `appsettings.json` edits once credentials are in user-secrets. Dimension IDs in `Startup.cs` reference dimensions that you must first create in the demo Piwik PRO tenant -- see [Configuration → Custom Dimension Auto-Tracking](configuration.md#custom-dimension-auto-tracking).
 
 ---
 
