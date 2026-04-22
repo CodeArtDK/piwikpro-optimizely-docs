@@ -1,6 +1,6 @@
 # Getting Started
 
-This guide walks you through installing, configuring, and verifying the Piwik PRO Optimizely Connector in your Optimizely CMS 12 project.
+This guide walks you through installing, configuring, and verifying the Piwik PRO Optimizely Connector in your Optimizely CMS project. Both CMS 12 (on .NET 8) and CMS 13 (on .NET 10) are supported from the same NuGet package.
 
 ---
 
@@ -8,8 +8,12 @@ This guide walks you through installing, configuring, and verifying the Piwik PR
 
 Before you begin, make sure you have the following:
 
-- **Optimizely CMS 12** (EPiServer CMS 12) project set up and running
+- An Optimizely CMS project set up and running, either:
+    - **Optimizely CMS 12** (EPiServer.CMS 12.x) on **.NET 8**, or
+    - **Optimizely CMS 13** (EPiServer.CMS 13.x) on **.NET 10**
 - **A Piwik PRO account** with access to the Administration panel. If you do not have one yet, you can [sign up for a free trial](https://piwik.pro/business-plan/?utm_campaign=codeart).
+
+> **CMS 13 note:** audience (Visitor Group) tracking is a no-op on CMS 13 until the connector is updated for the new visitor-group pipeline. Every other feature — tracking script injection, events/goals/custom dimensions, analytics dashboard, content analytics widget, multi-site mapping — is fully supported on both CMS versions.
 
 ---
 
