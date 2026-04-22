@@ -10,7 +10,7 @@ Bring your Piwik PRO analytics data directly into the Optimizely CMS editorial e
 
 - **Automatic Tracking Script Injection** — Piwik PRO container script injected into every front-end page, with edit/preview mode excluded automatically
 - **Event, Goal & Custom Dimension Tracking** — Programmatic API (`IPiwikProTrackingService`) to track events, goals, custom dimensions, and user IDs from your code
-- **Visitor Group / Audience Tracking** — Automatically captures Optimizely Visitor Group membership as Piwik PRO events or custom dimensions
+- **Visitor Group / Audience Tracking** — Automatically captures Optimizely Visitor Group membership as Piwik PRO events or custom dimensions (CMS 12 only)
 - **Analytics Dashboard** — 8 pages in the CMS admin UI: Overview, Live Map, Sessions, Acquisition, Behavior, Visitors, Goals, Settings
 - **Content Analytics Widget** — Per-page and per-block analytics in the CMS assets pane with KPIs, traffic sources, funnels, audiences, conversions, and session logs
 - **Live Traffic Map** — Interactive D3.js force-directed graph showing page hierarchy with real-time traffic indicators
@@ -20,9 +20,14 @@ Bring your Piwik PRO analytics data directly into the Optimizely CMS editorial e
 
 ## Requirements
 
-- Optimizely CMS 12 (EPiServer.CMS 12.x)
-- .NET 8.0 or later
-- A Piwik PRO account with API access — **[start a free trial](https://piwik.pro/business-plan/?utm_campaign=codeart)**
+One of:
+
+- **Optimizely CMS 12** (EPiServer.CMS 12.x) on **.NET 8**, or
+- **Optimizely CMS 13** (EPiServer.CMS 13.x) on **.NET 10**.
+
+Plus a Piwik PRO account with API access — **[start a free trial](https://piwik.pro/business-plan/?utm_campaign=codeart)**.
+
+The NuGet ships both `lib/net8.0/` and `lib/net10.0/` — the install command is identical on both CMS versions. Audience (Visitor Group) tracking is currently a no-op on CMS 13; every other feature is fully supported on both versions.
 
 ## Quick Start
 

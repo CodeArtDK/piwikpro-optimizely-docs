@@ -48,6 +48,8 @@ Track Optimizely Visitor Group matches as Piwik PRO events or custom dimensions.
 | `TrackAudiencesAsEvents` | `bool` | `false` | Track Optimizely Visitor Group matches as Piwik PRO events. |
 | `AudienceDimensionId` | `int?` | `null` | Custom dimension ID in Piwik PRO to use for storing audience/visitor group data. Leave `null` to disable dimension-based audience tracking. |
 
+> **CMS 13 note:** audience tracking is a no-op on CMS 13 until the connector is updated for the new visitor-group pipeline. Both options above are accepted but do nothing when the host runs on CMS 13 / .NET 10. Every other signal on this page (custom dimensions, content-type tracking, user ID, etc.) works identically on both CMS versions.
+
 ## Custom Dimension Auto-Tracking
 
 The connector can automatically enrich every page view with metadata about the current Optimizely content by pushing values into Piwik PRO **custom dimensions**. Each option below is `null` by default — pointing an option at a dimension ID turns the signal on, leaving it `null` turns it off.
