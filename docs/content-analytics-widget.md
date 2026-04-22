@@ -21,9 +21,13 @@ The widget organizes analytics into six tabs:
 >
 > All other tabs (Overview, Traffic, Funnel, Audiences, Conversions) remain per-content -- and aggregated across referencing pages for block content as described below.
 
+![Audiences tab in the Content Analytics Widget](images/content-widget-audiences.png)
+
 ## Block and Non-Page Content
 
 When you select a block or other non-page content in the editor, the per-content tabs automatically aggregate analytics across every page that references that content. References are resolved through Optimizely's `IContentSoftLinkRepository`, so any page that includes the block in a content area or property will contribute its analytics to the totals.
+
+![Block analytics aggregated across referencing pages](images/content-widget-block-aggregated.png)
 
 If a block has no referencing pages, the widget displays a message indicating that no analytics are available.
 

@@ -68,6 +68,8 @@ The Acquisition tab breaks down where your traffic is coming from.
 
 The Behavior tab focuses on what visitors do on your site.
 
+![Dashboard Behavior](images/dashboard-behavior.png)
+
 - **Top pages table** -- Pages ranked by Page Views, with additional columns for Unique Page Views and Bounce Rate.
 - **Downloads table** -- Files downloaded by visitors, with download counts.
 - **Outlinks table** -- External links clicked by visitors, showing the destination URL and click count.
